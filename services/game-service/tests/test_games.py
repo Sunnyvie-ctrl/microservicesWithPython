@@ -1,3 +1,14 @@
+from fastapi.testclient import TestClient
+
+from app.main import app
+
+client = TestClient(app)
+
+def test_list_games():
+    response = client.get("/v1/games")
+
+    assert response.status_code == 200
+    assert "items" in response.json()
 # Module 2 exercise — write your pytest tests here.
 #
 # Use FastAPI's TestClient to test your endpoints without a running server.
