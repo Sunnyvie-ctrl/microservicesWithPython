@@ -13,3 +13,27 @@
 # read directly from SQLAlchemy ORM objects.
 #
 # See the README for the full implementation.
+
+from pydantic import BaseModel
+
+
+class UserCreate(BaseModel):
+    username: str
+    email: str
+    password: str
+
+
+class UserOut(BaseModel):
+    id: str
+    username: str
+    email: str
+    is_active: bool
+
+    model_config = {"from_attributes": True}
+
+
+class UserList(BaseModel):
+    items: list[UserOut]
+    total: int
+    limit: int
+    offset: int
