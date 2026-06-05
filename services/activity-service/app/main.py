@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import Base, engine, get_db
 from app import repository, schemas
+from app.infrastructure.rabbitmq_publisher import publish_activity_event
 
 Base.metadata.create_all(bind=engine)
 
@@ -109,8 +110,22 @@ def health():
 @app.post("/v1/activities", response_model=schemas.ActivityOut, status_code=201)
 async def create_activity(data: schemas.ActivityCreate, db: Session = Depends(get_db)):
     await validate_user(data.user_id)
+
     activity = repository.create_activity(db, data)
+
     game_data = await fetch_game(activity.game_id)
+
+    game_title = None
+    if game_data:
+        game_title = game_data.get("title")
+
+    await publish_activity_event(
+        user_id=activity.user_id,
+        game_id=activity.game_id,
+        action=activity.action,
+        game_title=game_title,
+    )
+
     return {
         "id": activity.id,
         "user_id": activity.user_id,
