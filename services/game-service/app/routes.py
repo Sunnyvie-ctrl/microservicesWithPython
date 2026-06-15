@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app import service, schemas
+from app.infrastructure.cache import get_game_summary
 
 router = APIRouter(
     prefix="/v1/games",
@@ -70,6 +71,22 @@ def get_game(
             status_code=404,
             detail=str(e)
         )
+    
+
+@router.get(
+    "/{game_id}/summary"
+)
+
+async def get_game_summary_endpoint(game_id: str):
+    summary = get_game_summary(game_id)
+
+    if summary is None:
+        raise HTTPException(
+            status_code=404, 
+            detail="Game not found"
+            )
+    
+    return summary
 # Interface layer — HTTP endpoints.
 #
 # Define a router with prefix="/v1/games" and implement these endpoints:
