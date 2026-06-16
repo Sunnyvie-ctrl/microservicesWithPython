@@ -14,6 +14,7 @@ from app.config import settings
 from app.database import Base, engine, get_db
 from app import repository, schemas
 from app.infrastructure.rabbitmq_publisher import publish_activity_event
+from app.infrastructure.auth_client import get_auth_headers
 
 Base.metadata.create_all(bind=engine)
 
@@ -42,9 +43,12 @@ async def validate_user(user_id: str) -> None:
     """
     for attempt in range(2):  # initial call + 1 retry
         try:
+            headers = await get_auth_headers()
+
             async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.get(
-                    f"{settings.user_service_url}/v1/users/{user_id}"
+                    f"{settings.user_service_url}/v1/users/{user_id}",
+                    headers=headers,
                 )
 
             if response.status_code == 200:
@@ -85,9 +89,12 @@ async def fetch_game(game_id: str) -> dict | None:
     """
     
     try:
+        headers = await get_auth_headers()
+
         async with httpx.AsyncClient(timeout=5.0) as client:
             response = await client.get(
-                f"{settings.game_service_url}/v1/games/{game_id}"
+                f"{settings.game_service_url}/v1/games/{game_id}",
+                headers=headers,
             )
 
         if response.status_code == 200:

@@ -77,6 +77,14 @@ def find_games(
         limit=limit,
         offset=offset,
     )
+
+def remove_game(db: Session, game_id: str):
+    game = repository.delete_game(db, game_id)
+
+    if game is None:
+        raise ValueError("Game not found")
+
+    return {"message": "Game deleted successfully"}
 # Application layer — business logic.
 #
 # Calls repository functions and returns Pydantic schemas (not raw ORM objects).

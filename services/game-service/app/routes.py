@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app import service, schemas
 from app.infrastructure.cache import get_game_summary
+from app.security import require_admin
 
 router = APIRouter(
     prefix="/v1/games",
@@ -87,6 +88,23 @@ async def get_game_summary_endpoint(game_id: str):
             )
     
     return summary
+
+@router.delete(
+    "/{game_id}",
+    dependencies=[Depends(require_admin)]
+)
+def delete_game(
+    game_id: str,
+    db: Session = Depends(get_db)
+):
+    try:
+        return service.remove_game(db, game_id)
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=404,
+            detail=str(e)
+        )
 # Interface layer — HTTP endpoints.
 #
 # Define a router with prefix="/v1/games" and implement these endpoints:
