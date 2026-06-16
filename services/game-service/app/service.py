@@ -6,9 +6,22 @@ from app.schemas import (
     GameOut,
     GameList,
 )
+from app.infrastructure.cache import set_game_summary
 
 def add_game(db: Session, data: GameCreate) -> GameOut:
     game = repository.create_game(db, data)
+
+    set_game_summary(
+        game.id,
+        {
+            "id": game.id,
+            "title": game.title,
+            "genre": game.genre,
+            "platform": game.platform,
+            "cover_url": game.cover_url,
+        },
+    )
+    
     return GameOut.model_validate(game)
 
 def fetch_game(db: Session, game_id: str) -> GameOut:
@@ -64,6 +77,14 @@ def find_games(
         limit=limit,
         offset=offset,
     )
+
+def remove_game(db: Session, game_id: str):
+    game = repository.delete_game(db, game_id)
+
+    if game is None:
+        raise ValueError("Game not found")
+
+    return {"message": "Game deleted successfully"}
 # Application layer — business logic.
 #
 # Calls repository functions and returns Pydantic schemas (not raw ORM objects).

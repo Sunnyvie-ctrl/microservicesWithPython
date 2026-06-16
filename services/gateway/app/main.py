@@ -1,4 +1,5 @@
 import httpx
+from jose import JWTError, jwt
 from fastapi import FastAPI, Request, Response
 
 from app.config import settings
@@ -11,6 +12,11 @@ ROUTES: dict[str, str] = {
     "activities": settings.activity_service_url,
     # Added in Module 4
     "notifications": settings.notification_service_url,
+
+    "consent": settings.logging_service_url,
+    "logs": settings.logging_service_url,
+
+    "auth": settings.auth_service_url,
 }
 
 
@@ -21,6 +27,32 @@ async def health():
 
 @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
 async def proxy(request: Request, path: str):
+
+    if path == "v1/auth/token":
+        pass
+    else:
+        auth_header = request.headers.get("Authorization")
+
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return Response(
+                status_code=401,
+                content="Missing token",
+            )
+
+        token = auth_header.split(" ", 1)[1]
+
+        try:
+            jwt.decode(
+                token,
+                settings.secret_key,
+                algorithms=["HS256"],
+            )
+        except JWTError:
+            return Response(
+                status_code=401,
+                content="Invalid or expired token",
+            )
+        
     # Step 1 — parse the resource name from the path
     segments = path.split("/")
     if len(segments) < 2:

@@ -58,6 +58,17 @@ def search_games(
     )
 
     return games, total
+
+def delete_game(db: Session, game_id: str):
+    game = db.get(Game, game_id)
+
+    if game is None:
+        return None
+
+    db.delete(game)
+    db.commit()
+
+    return game
 # Infrastructure layer — raw database queries.
 #
 # Implement these four functions. Each takes `db: Session` as its first argument.
